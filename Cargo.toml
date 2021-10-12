@@ -1,0 +1,27 @@
+#cargo-features = ["edition2021"]
+
+[package]
+name    = "sim-cloth"
+version = "0.1.0"
+authors = [ "Alexi Chepura <a.chepura@gmail.com>" ]
+edition = "2021"
+
+[features]
+dev = []
+
+[dependencies]
+bevy = { version = "^0.5" }
+bevy_rapier3d = { version = "^0.11.0", features = [ "render" ] }
+rapier3d = { version = "^0.11.1", default-features = false, features = [ "dim3", "f32" ] }
+nalgebra = "^0.29.0"
+
+[profile.dev.package.bevy_rapier3d]
+opt-level = 3
+
+[profile.release]
+codegen-units = 1
+
+[dev-dependencies]
+# bevy = { version = "0.5.0", features = ["dynamic"] }
+# bevy_wgpu = "0.5"
+# bevy_winit = { version = "0.5", features = [ "x11" ] }
