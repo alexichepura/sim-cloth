@@ -48,12 +48,9 @@ fn setup(
     let mut normals: Vec<[f32; 3]> = vec![];
     let mut uvs: Vec<[f32; 2]> = vec![];
 
-    let mut collider_vertices: Vec<Point<Real>> = vec![];
-    let mut collider_indices: Vec<[u32; 3]> = vec![];
-
-    let num = 30;
-    let joint_half_size = 0.01;
-    let joint_distance = 0.02;
+    let num = 15;
+    let joint_half_size = 0.02;
+    let joint_distance = 0.04;
     let mut body_handles = Vec::new();
     let joint_rotation = Vec3::new(0., 0., 0.);
 
@@ -61,9 +58,10 @@ fn setup(
         for i in 0..num {
             let fk = k as f32;
             let fi = i as f32;
-            let joint_point = vector![fk * joint_distance, 1.8, fi * joint_distance * 2.0];
+            let joint_point = vector![fk * joint_distance, 1.8, fi * joint_distance];
             vertices.push(joint_point.into());
             uvs.push([0.0, 0.0]);
+            normals.push(normal);
             let joint_isometry: Isometry<Real> =
                 Isometry::new(joint_point.into(), joint_rotation.into());
 
@@ -114,27 +112,28 @@ fn setup(
         }
     }
 
+    let unum = num as u32;
     for row in 0..num {
         for col in 0..num {
+            let urow = row as u32;
+            let ucol = col as u32;
             // A--B
             // |\ |   This cube face has two triangles:
             // | \|   ABD and ADC.
             // C--D
             // 0, 1, 3, 0, 3, 2
-            let p_a: usize = row * num + col;
-            let p_b: usize = p_a + 1;
-            let p_c: usize = p_a + num;
-            let p_d: usize = p_a + 1 + num;
+            let p_a: u32 = urow * unum + ucol;
+            let p_b: u32 = p_a + 1;
+            let p_c: u32 = p_a + unum;
+            let p_d: u32 = p_a + 1 + unum;
 
-            indices.push((p_a).try_into().unwrap());
-            indices.push((p_b).try_into().unwrap());
-            indices.push((p_d).try_into().unwrap());
-            normals.push(normal);
+            indices.push(p_a);
+            indices.push(p_b);
+            indices.push(p_d);
 
-            indices.push((p_a).try_into().unwrap());
-            indices.push((p_d).try_into().unwrap());
-            indices.push((p_c).try_into().unwrap());
-            normals.push(normal);
+            indices.push(p_a);
+            indices.push(p_d);
+            indices.push(p_c);
         }
     }
 
@@ -148,7 +147,7 @@ fn setup(
 
     commands.spawn_bundle(PbrBundle {
         mesh: meshes.add(mesh),
-        material: materials.add(Color::rgba(0.2, 0.4, 0.2, 0.5).into()),
+        material: materials.add(Color::rgba(0.2, 0.4, 0.2, 0.9).into()),
         ..Default::default()
     });
 
@@ -165,7 +164,7 @@ fn setup(
         .insert_bundle(RigidBodyBundle {
             position: RigidBodyPosition {
                 position: Isometry::new(
-                    vector![-0.1, 1.0, -0.1].into(),
+                    vector![0.0, 1.0, 0.0].into(),
                     Vec3::new(0., 0., 0.).into(),
                 ),
                 ..Default::default()
@@ -186,7 +185,7 @@ fn setup(
             mesh: meshes.add(Mesh::from(shape::Plane {
                 size: plane_half * 2.0,
             })),
-            material: materials.add(Color::rgba(0.2, 0.6, 0.2, 0.5).into()),
+            material: materials.add(Color::rgb(0.2, 0.6, 0.2).into()),
             ..Default::default()
         })
         .insert_bundle(RigidBodyBundle {
@@ -205,11 +204,11 @@ fn setup(
             ..Default::default()
         });
     commands.spawn_bundle(LightBundle {
-        transform: Transform::from_translation(Vec3::new(0.0, 10.0, 5.0)),
+        transform: Transform::from_translation(Vec3::new(0.0, 5.0, 5.0)),
         ..Default::default()
     });
     commands.spawn_bundle(PerspectiveCameraBundle {
-        transform: Transform::from_translation(Vec3::new(1.0, 3.0, 2.0))
+        transform: Transform::from_translation(Vec3::new(2.0, 3.0, 4.0))
             .looking_at(Vec3::default(), Vec3::Y),
         ..Default::default()
     });
