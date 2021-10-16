@@ -45,8 +45,8 @@ fn setup(
     let mut vertices: Vec<[f32; 3]> = vec![];
     let mut indices: Vec<u32> = vec![];
     let normal: [f32; 3] = [0., 0., 0.];
-    let normals: Vec<[f32; 3]> = vec![normal];
-    let uvs: Vec<[f32; 2]> = vec![];
+    let mut normals: Vec<[f32; 3]> = vec![];
+    let mut uvs: Vec<[f32; 2]> = vec![];
 
     let mut collider_vertices: Vec<Point<Real>> = vec![];
     let mut collider_indices: Vec<[u32; 3]> = vec![];
@@ -63,6 +63,7 @@ fn setup(
             let fi = i as f32;
             let joint_point = vector![fk * joint_distance, 1.8, fi * joint_distance * 2.0];
             vertices.push(joint_point.into());
+            uvs.push([0.0, 0.0]);
             let joint_isometry: Isometry<Real> =
                 Isometry::new(joint_point.into(), joint_rotation.into());
 
@@ -124,13 +125,16 @@ fn setup(
             let p_b: usize = p_a + 1;
             let p_c: usize = p_a + num;
             let p_d: usize = p_a + 1 + num;
+
             indices.push((p_a).try_into().unwrap());
             indices.push((p_b).try_into().unwrap());
             indices.push((p_d).try_into().unwrap());
+            normals.push(normal);
 
             indices.push((p_a).try_into().unwrap());
             indices.push((p_d).try_into().unwrap());
             indices.push((p_c).try_into().unwrap());
+            normals.push(normal);
         }
     }
 
