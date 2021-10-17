@@ -5,10 +5,7 @@ use bevy::{
     ecs::system::{Commands, ResMut},
     math::Vec3,
     pbr::{prelude::StandardMaterial, LightBundle, PbrBundle},
-    prelude::{
-        CoreStage, Entity, Handle, IntoSystem, Msaa, PerspectiveCameraBundle, Query, QuerySet, Res,
-        With,
-    },
+    prelude::{CoreStage, Handle, IntoSystem, Msaa, PerspectiveCameraBundle, Query, QuerySet, Res},
     render::{
         color::Color,
         mesh::Mesh,
@@ -62,7 +59,7 @@ fn up(
     cloth_set
         .q0()
         .for_each(|j| vertices.push(j.0.translation.into()));
-    let first_vertex: [f32; 3] = vertices[0];
+    let first_vertex: [f32; 3] = vertices[0].clone();
 
     for (mut transform, _is) in cloth_set.q1_mut().iter_mut() {
         let mesh = meshes.get_mut(state.handle.clone());
@@ -124,13 +121,11 @@ fn setup(
             let joint_isometry: Isometry<Real> =
                 Isometry::new(joint_point.into(), joint_init_rot.into());
 
-            let mesh_handle = meshes.add(Mesh::from(shape::Cube {
-                size: joint_half_size * 2.0,
-            }));
-            state.handle = mesh_handle.clone();
             let ball_entity = commands
                 .spawn_bundle(PbrBundle {
-                    mesh: mesh_handle.clone(),
+                    mesh: meshes.add(Mesh::from(shape::Cube {
+                        size: joint_half_size * 2.0,
+                    })),
                     material: materials.add(Color::rgb(0.1, 0.1, 0.3).into()),
                     ..Default::default()
                 })
@@ -207,9 +202,11 @@ fn setup(
     mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, VertexAttributeValues::from(uvs));
     mesh.set_indices(Some(Indices::U32(indices)));
 
+    let mesh_handle = meshes.add(mesh);
+    state.handle = mesh_handle.clone();
     commands
         .spawn_bundle(PbrBundle {
-            mesh: meshes.add(mesh),
+            mesh: mesh_handle.clone(),
             material: materials.add(Color::rgba(0.2, 0.4, 0.2, 0.9).into()),
             ..Default::default()
         })
