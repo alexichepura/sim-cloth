@@ -5,7 +5,10 @@ use bevy::{
     ecs::system::{Commands, ResMut},
     math::Vec3,
     pbr::{prelude::StandardMaterial, LightBundle, PbrBundle},
-    prelude::{CoreStage, IntoSystem, Msaa, PerspectiveCameraBundle, Query, QuerySet, With},
+    prelude::{
+        CoreStage, Entity, Handle, IntoSystem, Msaa, PerspectiveCameraBundle, Query, QuerySet, Res,
+        With,
+    },
     render::{
         color::Color,
         mesh::Mesh,
@@ -29,6 +32,7 @@ fn main() {
     App::build()
         .insert_resource(Msaa { samples: 4 })
         .add_plugins(DefaultPlugins)
+        .init_resource::<State>()
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierRenderPlugin)
@@ -41,33 +45,45 @@ fn main() {
 pub struct ClothJoint;
 pub struct Cloth;
 
-pub fn up(
+#[derive(Default)]
+struct State {
+    handle: Handle<Mesh>,
+}
+
+fn up(
     mut cloth_set: QuerySet<(
         Query<(&Transform, &ClothJoint)>,
         Query<(&mut Transform, &Cloth)>,
     )>,
+    state: Res<State>,
+    // cloth_mesh_query: Query<(Entity, &Cloth)>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let mut vertices: Vec<[f32; 3]> = vec![];
-    cloth_set.q0().for_each(|j| {
-        let tr = j.0.translation;
-        vertices.push(tr.into())
-    });
+    cloth_set
+        .q0()
+        .for_each(|j| vertices.push(j.0.translation.into()));
     let first_vertex: [f32; 3] = vertices[0];
+    // https://github.com/bevyengine/bevy/pull/1164
+    // let pos = sub.attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap();
+    // if let VertexAttributeValues::Float3(ref mut pos) = pos {
+    //     pos.clear();
+    //     pos.extend(
+    //         triangles
+    //             .vertices
+    //             .iter()
+    //             .map(|v| [v.pos.x, v.pos.y, 0.0f32]),
+    //     );
+    // }
 
     for (mut transform, _is) in cloth_set.q1_mut().iter_mut() {
+        let m = meshes.get_mut(state.handle.clone());
+        if let Some(m) = m {
+            let pos = m.attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap();
+            println!("pos len {:?}", pos.len());
+        }
         transform.translation = first_vertex.into();
     }
-
-    // cloth_set.q1_mut().for_each_mut(|cloth| {
-    //     let (mut cloth_transform, _is) = cloth;
-    //     cloth_transform.translation = first_vertex.into();
-    // });
-
-    // let cloth = cloth_set.q1_mut().single_mut().ok();
-    // if let Some(cloth) = cloth {
-    //     let (mut cloth_transform, _is) = cloth;
-    //     cloth_transform.translation = first_vertex.into();
-    // }
 
     // let c = cloth.single_mut().ok();
     // if let Some(c) = c {
@@ -84,6 +100,7 @@ fn setup(
     mut commands: Commands,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
+    mut state: ResMut<State>,
 ) {
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     let mut vertices: Vec<[f32; 3]> = vec![];
@@ -116,11 +133,13 @@ fn setup(
             let joint_isometry: Isometry<Real> =
                 Isometry::new(joint_point.into(), joint_init_rot.into());
 
+            let mesh_handle = meshes.add(Mesh::from(shape::Cube {
+                size: joint_half_size * 2.0,
+            }));
+            state.handle = mesh_handle.clone();
             let ball_entity = commands
                 .spawn_bundle(PbrBundle {
-                    mesh: meshes.add(Mesh::from(shape::Cube {
-                        size: joint_half_size * 2.0,
-                    })),
+                    mesh: mesh_handle.clone(),
                     material: materials.add(Color::rgb(0.1, 0.1, 0.3).into()),
                     ..Default::default()
                 })
