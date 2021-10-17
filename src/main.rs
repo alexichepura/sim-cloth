@@ -96,18 +96,25 @@ fn setup(
     let joint_half_size = 0.02;
     let joint_distance = 0.04;
     let mut body_handles = Vec::new();
-    let joint_rotation = Vec3::new(0., 0., 0.);
+    let joint_init_rot = Vec3::new(0., 0., 0.);
+    let joint_init_pos = Vec3::new(0., 1.8, 0.);
 
     for k in 0..num {
         for i in 0..num {
             let fk = k as f32;
             let fi = i as f32;
-            let joint_point = vector![fk * joint_distance, 1.8, fi * joint_distance];
-            vertices.push(joint_point.into());
+            let joint_vertice = vector![fk * joint_distance, 0., fi * joint_distance];
+            vertices.push(joint_vertice.into());
             uvs.push([0.0, 0.0]);
             normals.push(normal);
+
+            let joint_point = vector![
+                joint_init_pos.x + joint_vertice[0],
+                joint_init_pos.y + joint_vertice[1],
+                joint_init_pos.z + joint_vertice[2]
+            ];
             let joint_isometry: Isometry<Real> =
-                Isometry::new(joint_point.into(), joint_rotation.into());
+                Isometry::new(joint_point.into(), joint_init_rot.into());
 
             let ball_entity = commands
                 .spawn_bundle(PbrBundle {
