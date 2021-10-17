@@ -56,7 +56,6 @@ fn up(
         Query<(&mut Transform, &Cloth)>,
     )>,
     state: Res<State>,
-    // cloth_mesh_query: Query<(Entity, &Cloth)>,
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let mut vertices: Vec<[f32; 3]> = vec![];
@@ -64,36 +63,28 @@ fn up(
         .q0()
         .for_each(|j| vertices.push(j.0.translation.into()));
     let first_vertex: [f32; 3] = vertices[0];
-    // https://github.com/bevyengine/bevy/pull/1164
-    // let pos = sub.attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap();
-    // if let VertexAttributeValues::Float3(ref mut pos) = pos {
-    //     pos.clear();
-    //     pos.extend(
-    //         triangles
-    //             .vertices
-    //             .iter()
-    //             .map(|v| [v.pos.x, v.pos.y, 0.0f32]),
-    //     );
-    // }
 
     for (mut transform, _is) in cloth_set.q1_mut().iter_mut() {
-        let m = meshes.get_mut(state.handle.clone());
-        if let Some(m) = m {
-            let pos = m.attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap();
-            println!("pos len {:?}", pos.len());
+        let mesh = meshes.get_mut(state.handle.clone());
+        if let Some(mesh) = mesh {
+            // https://github.com/bevyengine/bevy/pull/1164
+            // let pos = sub.attribute_mut(Mesh::ATTRIBUTE_POSITION).unwrap();
+            // if let VertexAttributeValues::Float3(ref mut pos) = pos {
+            //     pos.clear();
+            //     pos.extend(
+            //         triangles
+            //             .vertices
+            //             .iter()
+            //             .map(|v| [v.pos.x, v.pos.y, 0.0f32]),
+            //     );
+            // }
+            mesh.set_attribute(
+                Mesh::ATTRIBUTE_POSITION,
+                VertexAttributeValues::from(vertices.clone()),
+            );
         }
         transform.translation = first_vertex.into();
     }
-
-    // let c = cloth.single_mut().ok();
-    // if let Some(c) = c {
-    //     let (mut mesh, _tr, _is) = c;
-    // mesh.set_attribute(
-    //     Mesh::ATTRIBUTE_POSITION,
-    //     VertexAttributeValues::from(vertices.clone()),
-    // );
-    //     let p = mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION);
-    // }
 }
 
 fn setup(
