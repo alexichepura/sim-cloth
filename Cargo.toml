@@ -15,13 +15,11 @@ bevy_rapier3d = { version = "^0.11.0", features = [ "render" ] }
 rapier3d = { version = "^0.11.1", default-features = false, features = [ "dim3", "f32" ] }
 nalgebra = "^0.29.0"
 
-[profile.dev.package.bevy_rapier3d]
+[profile.dev.package."*"]
 opt-level = 3
+[profile.dev]
+opt-level = 1
 
 [profile.release]
 codegen-units = 1
 
-[dev-dependencies]
-# bevy = { version = "0.5.0", features = ["dynamic"] }
-# bevy_wgpu = "0.5"
-# bevy_winit = { version = "0.5", features = [ "x11" ] }

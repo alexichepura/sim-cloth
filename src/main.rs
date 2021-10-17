@@ -5,7 +5,7 @@ use bevy::{
     ecs::system::{Commands, ResMut},
     math::Vec3,
     pbr::{prelude::StandardMaterial, LightBundle, PbrBundle},
-    prelude::{IntoSystem, Msaa, PerspectiveCameraBundle},
+    prelude::{CoreStage, IntoSystem, Msaa, PerspectiveCameraBundle, Query, With},
     render::{
         color::Color,
         mesh::Mesh,
@@ -33,7 +33,19 @@ fn main() {
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierRenderPlugin)
         .add_startup_system(setup.system())
+        .add_system_to_stage(CoreStage::Update, up.system())
         .run();
+}
+
+pub struct ClothJoint;
+pub struct Cloth;
+
+pub fn up(mut cloth: Query<(&Mesh, &Transform, With<Cloth>)>) {
+    let c = cloth.single_mut().ok();
+    if let Some(c) = c {
+        let (mesh, _tr, _is) = c;
+        // mesh.attribute_mut(name);
+    }
 }
 
 fn setup(
@@ -48,7 +60,7 @@ fn setup(
     let mut normals: Vec<[f32; 3]> = vec![];
     let mut uvs: Vec<[f32; 2]> = vec![];
 
-    let num = 15;
+    let num = 20;
     let joint_half_size = 0.02;
     let joint_distance = 0.04;
     let mut body_handles = Vec::new();
@@ -86,6 +98,7 @@ fn setup(
                 })
                 .insert(Transform::default())
                 .insert(ColliderPositionSync::Discrete)
+                .insert(ClothJoint)
                 .id();
 
             if i > 0 {
@@ -145,11 +158,14 @@ fn setup(
     mesh.set_attribute(Mesh::ATTRIBUTE_UV_0, VertexAttributeValues::from(uvs));
     mesh.set_indices(Some(Indices::U32(indices)));
 
-    commands.spawn_bundle(PbrBundle {
-        mesh: meshes.add(mesh),
-        material: materials.add(Color::rgba(0.2, 0.4, 0.2, 0.9).into()),
-        ..Default::default()
-    });
+    commands
+        .spawn_bundle(PbrBundle {
+            mesh: meshes.add(mesh),
+            material: materials.add(Color::rgba(0.2, 0.4, 0.2, 0.9).into()),
+            ..Default::default()
+        })
+        .insert(Transform::default())
+        .insert(Cloth);
 
     let cube_half = 0.5;
     commands
