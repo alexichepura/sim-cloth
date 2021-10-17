@@ -103,9 +103,9 @@ fn setup(
     let mut normals: Vec<[f32; 3]> = vec![];
     let mut uvs: Vec<[f32; 2]> = vec![];
 
-    let num = 20;
+    let num = 40;
     let joint_half_size = 0.02;
-    let joint_distance = 0.04;
+    let joint_distance = 0.03;
     let mut body_handles = Vec::new();
     let joint_init_rot = Vec3::new(0., 0., 0.);
     let joint_init_pos = Vec3::new(0., 1.8, 0.);
@@ -128,14 +128,14 @@ fn setup(
                 Isometry::new(joint_point.into(), joint_init_rot.into());
 
             let ball_entity = commands
-                .spawn_bundle(PbrBundle {
-                    mesh: meshes.add(Mesh::from(shape::Cube {
-                        size: joint_half_size * 2.0,
-                    })),
-                    material: materials.add(Color::rgb(0.1, 0.1, 0.3).into()),
-                    ..Default::default()
-                })
-                .insert_bundle(RigidBodyBundle {
+                // .spawn_bundle(PbrBundle {
+                //     mesh: meshes.add(Mesh::from(shape::Cube {
+                //         size: joint_half_size * 2.0,
+                //     })),
+                //     material: materials.add(Color::rgb(0.1, 0.1, 0.3).into()),
+                //     ..Default::default()
+                // })
+                .spawn_bundle(RigidBodyBundle {
                     position: RigidBodyPosition {
                         position: joint_isometry,
                         ..Default::default()
@@ -232,7 +232,7 @@ fn setup(
         .insert_bundle(RigidBodyBundle {
             position: RigidBodyPosition {
                 position: Isometry::new(
-                    vector![0.0, 1.0, 0.0].into(),
+                    vector![0.1, 1.0, 0.1].into(),
                     Vec3::new(0., 0., 0.).into(),
                 ),
                 ..Default::default()
@@ -276,7 +276,7 @@ fn setup(
         ..Default::default()
     });
     commands.spawn_bundle(PerspectiveCameraBundle {
-        transform: Transform::from_translation(Vec3::new(2.0, 6.0, 7.0))
+        transform: Transform::from_translation(Vec3::new(2.0, 3.0, 3.0))
             .looking_at(Vec3::default(), Vec3::Y),
         ..Default::default()
     });
