@@ -5,7 +5,7 @@ use bevy::{
     ecs::system::{Commands, ResMut},
     math::Vec3,
     pbr::{prelude::StandardMaterial, LightBundle, PbrBundle},
-    prelude::{CoreStage, IntoSystem, Msaa, PerspectiveCameraBundle, Query, With},
+    prelude::{CoreStage, IntoSystem, Msaa, PerspectiveCameraBundle, Query, QuerySet, With},
     render::{
         color::Color,
         mesh::Mesh,
@@ -32,20 +32,52 @@ fn main() {
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierRenderPlugin)
+        // .add_system_to_stage(CoreStage::Update, up.system())
+        .add_system_to_stage(CoreStage::PreUpdate, up.system())
         .add_startup_system(setup.system())
-        .add_system_to_stage(CoreStage::Update, up.system())
         .run();
 }
 
 pub struct ClothJoint;
 pub struct Cloth;
 
-pub fn up(mut cloth: Query<(&Mesh, &Transform, With<Cloth>)>) {
-    let c = cloth.single_mut().ok();
-    if let Some(c) = c {
-        let (mesh, _tr, _is) = c;
-        // mesh.attribute_mut(name);
+pub fn up(
+    mut cloth_set: QuerySet<(
+        Query<(&Transform, &ClothJoint)>,
+        Query<(&mut Transform, &Cloth)>,
+    )>,
+) {
+    let mut vertices: Vec<[f32; 3]> = vec![];
+    cloth_set.q0().for_each(|j| {
+        let tr = j.0.translation;
+        vertices.push(tr.into())
+    });
+    let first_vertex: [f32; 3] = vertices[0];
+
+    for (mut transform, _is) in cloth_set.q1_mut().iter_mut() {
+        transform.translation = first_vertex.into();
     }
+
+    // cloth_set.q1_mut().for_each_mut(|cloth| {
+    //     let (mut cloth_transform, _is) = cloth;
+    //     cloth_transform.translation = first_vertex.into();
+    // });
+
+    // let cloth = cloth_set.q1_mut().single_mut().ok();
+    // if let Some(cloth) = cloth {
+    //     let (mut cloth_transform, _is) = cloth;
+    //     cloth_transform.translation = first_vertex.into();
+    // }
+
+    // let c = cloth.single_mut().ok();
+    // if let Some(c) = c {
+    //     let (mut mesh, _tr, _is) = c;
+    // mesh.set_attribute(
+    //     Mesh::ATTRIBUTE_POSITION,
+    //     VertexAttributeValues::from(vertices.clone()),
+    // );
+    //     let p = mesh.attribute_mut(Mesh::ATTRIBUTE_POSITION);
+    // }
 }
 
 fn setup(
