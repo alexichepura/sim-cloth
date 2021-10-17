@@ -56,9 +56,15 @@ fn up(
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let mut vertices: Vec<[f32; 3]> = vec![];
-    cloth_set
-        .q0()
-        .for_each(|j| vertices.push(j.0.translation.into()));
+    cloth_set.q0().for_each(|j| {
+        let first: [f32; 3] = if vertices.len() == 0 {
+            [0., 0., 0.]
+        } else {
+            vertices[0]
+        };
+        let tr = j.0.translation;
+        vertices.push([tr.x - first[0], tr.y - first[1], tr.z - first[2]])
+    });
     let first_vertex: [f32; 3] = vertices[0].clone();
 
     for (mut transform, _is) in cloth_set.q1_mut().iter_mut() {
@@ -266,11 +272,11 @@ fn setup(
             ..Default::default()
         });
     commands.spawn_bundle(LightBundle {
-        transform: Transform::from_translation(Vec3::new(0.0, 5.0, 5.0)),
+        transform: Transform::from_translation(Vec3::new(0.0, 6.0, 6.0)),
         ..Default::default()
     });
     commands.spawn_bundle(PerspectiveCameraBundle {
-        transform: Transform::from_translation(Vec3::new(2.0, 3.0, 4.0))
+        transform: Transform::from_translation(Vec3::new(2.0, 4.0, 5.0))
             .looking_at(Vec3::default(), Vec3::Y),
         ..Default::default()
     });
