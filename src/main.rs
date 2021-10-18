@@ -59,7 +59,7 @@ fn up(
     let mut normals: Vec<[f32; 3]> = vec![];
     cloth_set.q0().for_each(|joint_body| {
         let rot = joint_body.0.rotation;
-        let normal_shift = rot.mul_vec3(Vec3::new(0., 0.09, 0.));
+        let normal_shift = rot.mul_vec3(Vec3::new(0., 0.01, 0.));
         let normal = normal_shift.normalize();
         normals.push(normal.into());
 
@@ -117,10 +117,10 @@ fn setup(
     let mut normals: Vec<[f32; 3]> = vec![];
     let mut uvs: Vec<[f32; 2]> = vec![];
 
-    let num = 30;
-    let thikness = 0.002;
-    let joint_half_size = 0.02;
-    let joint_distance = 0.04;
+    let num = 50;
+    let thikness_half = 0.001;
+    let joint_half_size = 0.005;
+    let joint_distance = 0.020;
     let mut body_handles = Vec::new();
     let joint_init_rot = Vec3::new(0., 0., 0.);
     let joint_init_pos = Vec3::new(0., 1.8, 0.);
@@ -143,23 +143,19 @@ fn setup(
                 Isometry::new(joint_point.into(), joint_init_rot.into());
 
             let ball_entity = commands
-                .spawn_bundle(PbrBundle {
-                    // mesh: meshes.add(Mesh::from(shape::Cube {
-                    //     size: joint_half_size * 2.0,
-                    // })),
-                    mesh: meshes.add(Mesh::from(shape::Box {
-                        max_x: joint_half_size,
-                        min_x: -joint_half_size,
-                        max_y: 0.05 + thikness * 2.,
-                        // min_y: -thikness,
-                        min_y: 0.05 + 0.,
-                        max_z: joint_half_size,
-                        min_z: -joint_half_size,
-                    })),
-                    material: materials.add(Color::rgb(0.1, 0.1, 0.3).into()),
-                    ..Default::default()
-                })
-                .insert_bundle(RigidBodyBundle {
+                // .spawn_bundle(PbrBundle {
+                //     mesh: meshes.add(Mesh::from(shape::Box {
+                //         max_x: joint_half_size,
+                //         min_x: -joint_half_size,
+                //         max_y: thikness_half,
+                //         min_y: -thikness_half,
+                //         max_z: joint_half_size,
+                //         min_z: -joint_half_size,
+                //     })),
+                //     material: materials.add(Color::rgb(0.1, 0.1, 0.3).into()),
+                //     ..Default::default()
+                // })
+                .spawn_bundle(RigidBodyBundle {
                     position: RigidBodyPosition {
                         position: joint_isometry,
                         ..Default::default()
@@ -168,10 +164,10 @@ fn setup(
                 })
                 .insert_bundle(ColliderBundle {
                     // shape: ColliderShape::ball(joint_half_size),
-                    shape: ColliderShape::cuboid(joint_half_size, thikness, joint_half_size),
+                    shape: ColliderShape::cuboid(joint_half_size, thikness_half, joint_half_size),
                     material: ColliderMaterial {
                         friction: 0.5,
-                        restitution: 0.001,
+                        restitution: 0.0001,
                         ..Default::default()
                     },
                     ..Default::default()
