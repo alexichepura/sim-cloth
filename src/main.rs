@@ -136,7 +136,7 @@ fn setup(
             let fi = i as f32;
             let joint_vertice = vector![fk * joint_distance, 0., fi * joint_distance];
             vertices.push(joint_vertice.into());
-            uvs.push([0.0, 0.0]);
+            uvs.push([fk / 100.0, fi / 100.0]);
             normals.push(normal);
 
             let joint_point = vector![
