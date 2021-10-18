@@ -18,9 +18,9 @@ use bevy::{
 use bevy_rapier3d::{
     physics::JointBuilderComponent,
     prelude::{
-        BallJoint, ColliderBundle, ColliderMaterial, ColliderPositionSync, ColliderShape, Isometry,
-        NoUserData, Point, RapierPhysicsPlugin, Real, RigidBodyBundle, RigidBodyPosition,
-        RigidBodyType,
+        BallJoint, CoefficientCombineRule, ColliderBundle, ColliderMaterial, ColliderPositionSync,
+        ColliderShape, Isometry, NoUserData, Point, RapierPhysicsPlugin, Real, RigidBodyBundle,
+        RigidBodyDamping, RigidBodyPosition, RigidBodyType, SpringModel, Vector,
     },
     render::RapierRenderPlugin,
 };
@@ -59,7 +59,7 @@ fn up(
     let mut normals: Vec<[f32; 3]> = vec![];
     cloth_set.q0().for_each(|joint_body| {
         let rot = joint_body.0.rotation;
-        let normal_shift = rot.mul_vec3(Vec3::new(0., 0.01, 0.));
+        let normal_shift = rot.mul_vec3(Vec3::new(0., 0.020, 0.));
         let normal = normal_shift.normalize();
         normals.push(normal.into());
 
@@ -118,9 +118,10 @@ fn setup(
     let mut uvs: Vec<[f32; 2]> = vec![];
 
     let num = 50;
-    let thikness_half = 0.001;
+    let thikness_half = 0.0001;
     let joint_half_size = 0.005;
-    let joint_distance = 0.020;
+    let joint_half_distance = joint_half_size + 0.005;
+    let joint_distance = joint_half_distance * 2.;
     let mut body_handles = Vec::new();
     let joint_init_rot = Vec3::new(0., 0., 0.);
     let joint_init_pos = Vec3::new(0., 1.8, 0.);
@@ -160,14 +161,21 @@ fn setup(
                         position: joint_isometry,
                         ..Default::default()
                     },
+                    damping: RigidBodyDamping {
+                        linear_damping: 5.0,
+                        angular_damping: 100000000.0,
+                        ..Default::default()
+                    },
                     ..Default::default()
                 })
                 .insert_bundle(ColliderBundle {
                     // shape: ColliderShape::ball(joint_half_size),
                     shape: ColliderShape::cuboid(joint_half_size, thikness_half, joint_half_size),
                     material: ColliderMaterial {
-                        friction: 0.5,
-                        restitution: 0.0001,
+                        friction: 0.005,
+                        restitution: 0.00001,
+                        friction_combine_rule: CoefficientCombineRule::Min,
+                        restitution_combine_rule: CoefficientCombineRule::Min,
                         ..Default::default()
                     },
                     ..Default::default()
@@ -177,23 +185,50 @@ fn setup(
                 .insert(ClothJoint)
                 .id();
 
+            // let stiffness = 0.000000001;
+            // let damping = 0.0000000001;
+            let stiffness = 0.2;
+            let damping = 1.0;
+            // let damping = 100.0;
+
             if i > 0 {
-                let parent_handle = *body_handles.last().unwrap();
-                let joint =
-                    BallJoint::new(Point::origin(), point![0.0, 0.0, -joint_distance * 2.0]);
+                let parent_entity = *body_handles.last().unwrap();
+                let mut joint = BallJoint::new(
+                    point![0.0, 0.0, joint_half_distance],
+                    point![0.0, 0.0, -joint_half_distance],
+                );
+                // joint.limits_enabled = true;
+                // joint.limits_local_axis1 = Vector::y_axis();
+                // joint.limits_local_axis2 = Vector::y_axis();
+                // joint.limits_angle = 0.0000001;
+                // joint.limits_impulse = 0.000001;
+                // joint.motor_model = SpringModel::ForceBased;
+                joint.motor_stiffness = stiffness;
+                joint.motor_damping = damping;
                 commands.spawn_bundle((JointBuilderComponent::new(
                     joint,
-                    parent_handle,
+                    parent_entity,
                     ball_entity,
                 ),));
             }
             if k > 0 {
                 let parent_index = body_handles.len() - num;
-                let parent_handle = body_handles[parent_index];
-                let joint = BallJoint::new(Point::origin(), point![-joint_distance, 0.0, 0.0]);
+                let parent_entity = body_handles[parent_index];
+                let mut joint = BallJoint::new(
+                    point![joint_half_distance, 0.0, 0.0],
+                    point![-joint_half_distance, 0.0, 0.0],
+                );
+                // joint.limits_enabled = true;
+                // joint.limits_local_axis1 = Vector::y_axis();
+                // joint.limits_local_axis2 = Vector::y_axis();
+                // joint.limits_angle = 0.0000001;
+                // joint.limits_impulse = 0.000001;
+                // joint.motor_model = SpringModel::ForceBased;
+                joint.motor_stiffness = stiffness;
+                joint.motor_damping = damping;
                 commands.spawn_bundle((JointBuilderComponent::new(
                     joint,
-                    parent_handle,
+                    parent_entity,
                     ball_entity,
                 ),));
             }
@@ -239,7 +274,8 @@ fn setup(
     commands
         .spawn_bundle(PbrBundle {
             mesh: mesh_handle.clone(),
-            material: materials.add(Color::rgba(0.4, 0.3, 0.3, 0.95).into()),
+            // material: materials.add(Color::rgba(0.4, 0.3, 0.3, 0.95).into()),
+            material: materials.add(Color::rgb(0.4, 0.3, 0.3).into()),
             ..Default::default()
         })
         .insert(Transform::default())
