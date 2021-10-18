@@ -5,7 +5,10 @@ use bevy::{
     ecs::system::{Commands, ResMut},
     math::Vec3,
     pbr::{prelude::StandardMaterial, LightBundle, PbrBundle},
-    prelude::{CoreStage, Handle, IntoSystem, Msaa, PerspectiveCameraBundle, Query, QuerySet, Res},
+    prelude::{
+        AssetServer, CoreStage, Handle, IntoSystem, Msaa, PerspectiveCameraBundle, Query, QuerySet,
+        Res,
+    },
     render::{
         color::Color,
         mesh::Mesh,
@@ -109,6 +112,7 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut state: ResMut<State>,
+    asset_server: Res<AssetServer>,
 ) {
     let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
     let mut vertices: Vec<[f32; 3]> = vec![];
@@ -281,11 +285,18 @@ fn setup(
 
     let mesh_handle = meshes.add(mesh);
     state.handle = mesh_handle.clone();
+
+    let texture_handle = asset_server.load("texture.png");
     commands
         .spawn_bundle(PbrBundle {
             mesh: mesh_handle.clone(),
+            material: materials.add(StandardMaterial {
+                base_color_texture: Some(texture_handle.clone()),
+                // roughness: 0.2,
+                ..Default::default()
+            }),
             // material: materials.add(Color::rgba(0.4, 0.3, 0.3, 0.95).into()),
-            material: materials.add(Color::rgb(0.4, 0.3, 0.3).into()),
+            // material: materials.add(Color::rgb(0.4, 0.3, 0.3).into()),
             ..Default::default()
         })
         .insert(Transform::default())
