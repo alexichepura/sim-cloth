@@ -56,13 +56,23 @@ fn up(
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let mut vertices: Vec<[f32; 3]> = vec![];
+    let mut normals: Vec<[f32; 3]> = vec![];
     cloth_set.q0().for_each(|joint_body| {
+        let rot = joint_body.0.rotation;
+        let normal_shift = rot.mul_vec3(Vec3::new(0., 0.09, 0.));
+        let normal = normal_shift.normalize();
+        normals.push(normal.into());
+
         if vertices.len() == 0 {
             vertices.push([0., 0., 0.]);
         } else {
             let first: [f32; 3] = vertices[0];
             let tr = joint_body.0.translation;
-            vertices.push([tr.x - first[0], tr.y - first[1], tr.z - first[2]])
+            vertices.push([
+                tr.x - first[0] + normal_shift.x,
+                tr.y - first[1] + normal_shift.y,
+                tr.z - first[2] + normal_shift.z,
+            ]);
         }
     });
     let first_vertex: [f32; 3] = vertices[0].clone();
@@ -84,6 +94,10 @@ fn up(
             mesh.set_attribute(
                 Mesh::ATTRIBUTE_POSITION,
                 VertexAttributeValues::from(vertices.clone()),
+            );
+            mesh.set_attribute(
+                Mesh::ATTRIBUTE_NORMAL,
+                VertexAttributeValues::from(normals.clone()),
             );
         }
         transform.translation = first_vertex.into();
@@ -229,7 +243,7 @@ fn setup(
     commands
         .spawn_bundle(PbrBundle {
             mesh: mesh_handle.clone(),
-            material: materials.add(Color::rgba(0.2, 0.4, 0.2, 0.9).into()),
+            material: materials.add(Color::rgba(0.4, 0.3, 0.3, 0.95).into()),
             ..Default::default()
         })
         .insert(Transform::default())
