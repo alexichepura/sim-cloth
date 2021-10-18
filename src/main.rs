@@ -117,10 +117,10 @@ fn setup(
     let mut normals: Vec<[f32; 3]> = vec![];
     let mut uvs: Vec<[f32; 2]> = vec![];
 
-    let num = 50;
+    let num = 60;
     let thikness_half = 0.0001;
     let joint_half_size = 0.005;
-    let joint_half_distance = joint_half_size + 0.005;
+    let joint_half_distance = joint_half_size + 0.001;
     let joint_distance = joint_half_distance * 2.;
     let mut body_handles = Vec::new();
     let joint_init_rot = Vec3::new(0., 0., 0.);
