@@ -19,8 +19,8 @@ use bevy_rapier3d::{
     physics::JointBuilderComponent,
     prelude::{
         BallJoint, CoefficientCombineRule, ColliderBundle, ColliderMaterial, ColliderPositionSync,
-        ColliderShape, Isometry, NoUserData, Point, RapierPhysicsPlugin, Real, RigidBodyBundle,
-        RigidBodyDamping, RigidBodyPosition, RigidBodyType, SpringModel, Vector,
+        ColliderShape, Isometry, MassProperties, NoUserData, Point, RapierPhysicsPlugin, Real,
+        RigidBodyBundle, RigidBodyDamping, RigidBodyPosition, RigidBodyType, SpringModel, Vector,
     },
     render::RapierRenderPlugin,
 };
@@ -34,7 +34,7 @@ fn main() {
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierRenderPlugin)
-        // .add_system_to_stage(CoreStage::PreUpdate, up.system())
+        .add_system_to_stage(CoreStage::PreUpdate, up.system())
         .add_startup_system(setup.system())
         .run();
 }
@@ -118,8 +118,8 @@ fn setup(
     let mut uvs: Vec<[f32; 2]> = vec![];
 
     let num = 80;
-    let thikness_half = 0.005;
-    let joint_half_size = 0.005;
+    let thikness_half = 0.003;
+    let joint_half_size = 0.004;
     let joint_half_distance = joint_half_size + 0.001;
     let joint_distance = joint_half_distance * 2.;
     let mut body_handles = Vec::new();
@@ -162,19 +162,28 @@ fn setup(
                         ..Default::default()
                     },
                     damping: RigidBodyDamping {
-                        linear_damping: 10.0,
+                        linear_damping: 1.0,
                         // angular_damping: 1000.0,
-                        angular_damping: 10000000000.0,
+                        angular_damping: 1000000000000.0,
+                        // angular_damping: 10000000.0,
                         ..Default::default()
                     },
+
                     ..Default::default()
                 })
                 .insert_bundle(ColliderBundle {
                     // shape: ColliderShape::ball(joint_half_size),
                     shape: ColliderShape::cuboid(joint_half_size, thikness_half, joint_half_size),
+                    mass_properties: MassProperties::new(
+                        Vec3::new(0.0, 0.0, 0.0).into(),
+                        0.0001,
+                        Vec3::new(0.000001, 0.000001, 0.000001).into(),
+                        // Vec3::new(1.0, 1.0, 1.0).into(),
+                    )
+                    .into(),
                     material: ColliderMaterial {
-                        friction: 500.0,
-                        // restitution: 0.00001,
+                        friction: 1000.0,
+                        restitution: 0.0000001,
                         friction_combine_rule: CoefficientCombineRule::Min,
                         restitution_combine_rule: CoefficientCombineRule::Min,
                         ..Default::default()
@@ -186,11 +195,11 @@ fn setup(
                 .insert(ClothJoint)
                 .id();
 
-            let stiffness = 0.000000001;
+            let stiffness = 0.0000000000001;
             // let damping = 0.0000000001;
-            // let stiffness = 1.9;
-            let damping = 1000000.0;
-            // let damping = 1.0;
+            // let stiffness = 0.2;
+            let damping = 10000000000.0;
+            // let damping = 1000.0;
 
             if i > 0 {
                 let parent_entity = *body_handles.last().unwrap();
@@ -203,7 +212,7 @@ fn setup(
                 // joint.limits_local_axis2 = Vector::y_axis();
                 // joint.limits_angle = 0.0000001;
                 // joint.limits_impulse = 0.000001;
-                // joint.motor_model = SpringModel::Disabled;
+                // joint.motor_model = SpringModel::ForceBased;
                 joint.motor_stiffness = stiffness;
                 joint.motor_damping = damping;
                 commands.spawn_bundle((JointBuilderComponent::new(
@@ -224,7 +233,7 @@ fn setup(
                 // joint.limits_local_axis2 = Vector::y_axis();
                 // joint.limits_angle = 0.0000001;
                 // joint.limits_impulse = 0.000001;
-                // joint.motor_model = SpringModel::Disabled;
+                // joint.motor_model = SpringModel::ForceBased;
                 joint.motor_stiffness = stiffness;
                 joint.motor_damping = damping;
                 commands.spawn_bundle((JointBuilderComponent::new(
