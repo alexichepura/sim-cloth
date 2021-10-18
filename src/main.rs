@@ -117,7 +117,7 @@ fn setup(
     let mut normals: Vec<[f32; 3]> = vec![];
     let mut uvs: Vec<[f32; 2]> = vec![];
 
-    let num = 80;
+    let num = 90;
     let thikness_half = 0.003;
     let joint_half_size = 0.004;
     let joint_half_distance = joint_half_size + 0.001;
@@ -144,19 +144,19 @@ fn setup(
                 Isometry::new(joint_point.into(), joint_init_rot.into());
 
             let ball_entity = commands
-                .spawn_bundle(PbrBundle {
-                    mesh: meshes.add(Mesh::from(shape::Box {
-                        max_x: joint_half_size,
-                        min_x: -joint_half_size,
-                        max_y: thikness_half,
-                        min_y: -thikness_half,
-                        max_z: joint_half_size,
-                        min_z: -joint_half_size,
-                    })),
-                    material: materials.add(Color::rgb(0.1, 0.1, 0.3).into()),
-                    ..Default::default()
-                })
-                .insert_bundle(RigidBodyBundle {
+                // .spawn_bundle(PbrBundle {
+                //     mesh: meshes.add(Mesh::from(shape::Box {
+                //         max_x: joint_half_size,
+                //         min_x: -joint_half_size,
+                //         max_y: thikness_half,
+                //         min_y: -thikness_half,
+                //         max_z: joint_half_size,
+                //         min_z: -joint_half_size,
+                //     })),
+                //     material: materials.add(Color::rgb(0.1, 0.1, 0.3).into()),
+                //     ..Default::default()
+                // })
+                .spawn_bundle(RigidBodyBundle {
                     position: RigidBodyPosition {
                         position: joint_isometry,
                         ..Default::default()
