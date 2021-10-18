@@ -18,8 +18,9 @@ use bevy::{
 use bevy_rapier3d::{
     physics::JointBuilderComponent,
     prelude::{
-        BallJoint, ColliderBundle, ColliderPositionSync, ColliderShape, Isometry, NoUserData,
-        Point, RapierPhysicsPlugin, Real, RigidBodyBundle, RigidBodyPosition, RigidBodyType,
+        BallJoint, ColliderBundle, ColliderMaterial, ColliderPositionSync, ColliderShape, Isometry,
+        NoUserData, Point, RapierPhysicsPlugin, Real, RigidBodyBundle, RigidBodyPosition,
+        RigidBodyType,
     },
     render::RapierRenderPlugin,
 };
@@ -33,7 +34,6 @@ fn main() {
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .add_plugin(RapierRenderPlugin)
-        // .add_system_to_stage(CoreStage::Update, up.system())
         .add_system_to_stage(CoreStage::PreUpdate, up.system())
         .add_startup_system(setup.system())
         .run();
@@ -56,12 +56,12 @@ fn up(
     mut meshes: ResMut<Assets<Mesh>>,
 ) {
     let mut vertices: Vec<[f32; 3]> = vec![];
-    cloth_set.q0().for_each(|j| {
+    cloth_set.q0().for_each(|joint_body| {
         if vertices.len() == 0 {
             vertices.push([0., 0., 0.]);
         } else {
             let first: [f32; 3] = vertices[0];
-            let tr = j.0.translation;
+            let tr = joint_body.0.translation;
             vertices.push([tr.x - first[0], tr.y - first[1], tr.z - first[2]])
         }
     });
@@ -103,9 +103,10 @@ fn setup(
     let mut normals: Vec<[f32; 3]> = vec![];
     let mut uvs: Vec<[f32; 2]> = vec![];
 
-    let num = 40;
+    let num = 30;
+    let thikness = 0.002;
     let joint_half_size = 0.02;
-    let joint_distance = 0.03;
+    let joint_distance = 0.04;
     let mut body_handles = Vec::new();
     let joint_init_rot = Vec3::new(0., 0., 0.);
     let joint_init_pos = Vec3::new(0., 1.8, 0.);
@@ -128,14 +129,23 @@ fn setup(
                 Isometry::new(joint_point.into(), joint_init_rot.into());
 
             let ball_entity = commands
-                // .spawn_bundle(PbrBundle {
-                //     mesh: meshes.add(Mesh::from(shape::Cube {
-                //         size: joint_half_size * 2.0,
-                //     })),
-                //     material: materials.add(Color::rgb(0.1, 0.1, 0.3).into()),
-                //     ..Default::default()
-                // })
-                .spawn_bundle(RigidBodyBundle {
+                .spawn_bundle(PbrBundle {
+                    // mesh: meshes.add(Mesh::from(shape::Cube {
+                    //     size: joint_half_size * 2.0,
+                    // })),
+                    mesh: meshes.add(Mesh::from(shape::Box {
+                        max_x: joint_half_size,
+                        min_x: -joint_half_size,
+                        max_y: 0.05 + thikness * 2.,
+                        // min_y: -thikness,
+                        min_y: 0.05 + 0.,
+                        max_z: joint_half_size,
+                        min_z: -joint_half_size,
+                    })),
+                    material: materials.add(Color::rgb(0.1, 0.1, 0.3).into()),
+                    ..Default::default()
+                })
+                .insert_bundle(RigidBodyBundle {
                     position: RigidBodyPosition {
                         position: joint_isometry,
                         ..Default::default()
@@ -143,7 +153,13 @@ fn setup(
                     ..Default::default()
                 })
                 .insert_bundle(ColliderBundle {
-                    shape: ColliderShape::ball(joint_half_size),
+                    // shape: ColliderShape::ball(joint_half_size),
+                    shape: ColliderShape::cuboid(joint_half_size, thikness, joint_half_size),
+                    material: ColliderMaterial {
+                        friction: 0.5,
+                        restitution: 0.001,
+                        ..Default::default()
+                    },
                     ..Default::default()
                 })
                 .insert(Transform::default())
@@ -241,6 +257,11 @@ fn setup(
         })
         .insert_bundle(ColliderBundle {
             shape: ColliderShape::cuboid(cube_half, cube_half, cube_half),
+            material: ColliderMaterial {
+                friction: 10.,
+                restitution: 0.9,
+                ..Default::default()
+            },
             ..Default::default()
         })
         .insert(Transform::default())
